@@ -85,6 +85,35 @@ export default class Game extends Phaser.Scene {
       fill: "#000",
     });
 
+
+    this.gameOverText = this.add.text(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      '',
+      {
+        fontSize: '64px',
+        fill: '#ff0000',
+        fontStyle: 'bold',
+      }
+    ).setOrigin(0.5);
+
+    this.initialTime = 30;
+    this.timeText = this.add.text(
+      this.cameras.main.width - 16, 16,
+      `Time: ${this.initialTime}`,
+      {
+        fontSize: '32px',
+        fill: '#000'
+      }
+    ).setOrigin(1, 0);
+
+    this.timedEvent = this.time.addEvent({
+      delay: 1000,
+      callback: this.onSecond,
+      callbackScope: this,
+      loop: true
+    });
+
     this.physics.add.collider(this.player, this.platforms);
 
     this.physics.add.collider(this.stars, this.platforms);
@@ -104,10 +133,19 @@ export default class Game extends Phaser.Scene {
       null,
       this
     );
+
+    this.input.keyboard.on('keydown-R', () => {
+      this.scene.restart();
+    });
   }
 
   update() {
     // update game objects
+    if (this.gameOver) {
+      this.gameOverText.setText('GAME OVER');
+      return;
+    }
+
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-160);
 
@@ -160,5 +198,20 @@ export default class Game extends Phaser.Scene {
     this.player.anims.play("turn");
 
     this.gameOver = true;
+  }
+
+  onSecond() {
+    // Agregado: Función para descontar el tiempo cada segundo
+    if (!this.gameOver) {
+      this.initialTime -= 1;
+      this.timeText.setText('Time: ' + this.initialTime);
+
+      if (this.initialTime <= 0) {
+        this.gameOver = true;
+        this.physics.pause();
+        this.player.setTint(0xff0000);
+        this.player.anims.play("turn");
+      }
+    }
   }
 }
